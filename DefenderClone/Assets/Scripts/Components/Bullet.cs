@@ -148,6 +148,7 @@ public class Bullet5 : Bullet
 		Sprite sprite= Sprite.Create(GameManager.Instance.textureManager.PackedTexture,GameManager.Instance.textureManager.GetTextureRectByName(textureName),new Vector2(0.5f,0.5f),1);
 		spriteRenderer.sprite=sprite; 
         speed=200;
+        paint=Color.white;
     }
     public override void Move(float deltaX, float deltaY){
         if(!isCloseToDefender){
@@ -165,6 +166,11 @@ public class Bullet5 : Bullet
 	}
     public override void Seek(GameObject defender){
         velocity=Random.insideUnitCircle*speed;
+        paint=Color.red;
         base.Seek(defender);
+    }
+    public override void Roam(){
+        paint=Color.white;
+		base.Roam();
     }
 } 

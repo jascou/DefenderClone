@@ -35,41 +35,6 @@ public class AnimationManager  {
 		textureManager=GameManager.Instance.textureManager;
 		halfScreenWidth=Screen.width/2;
 	}
-	public Bullet AddBullet(string bulletName, Vector2 initialPosition){
-		Bullet bullet=bulletFactory.GetBullet(bulletName, initialPosition);
-		bulletsInScene.Add(bullet.displayObject,bullet);
-		return bullet;
-	}
-	public Enemy AddEnemy(string enemyName, Vector2 initialPosition){
-		Enemy enemy=enemyFactory.GetEnemy(enemyName, initialPosition);
-		craftsInScene.Add(enemy.displayObject,enemy);
-		return enemy;
-	}
-
-	public void FireDefender()
-    {
-        if(!defender.isReadyToFireAgain())return;
-		defender.SetFireTime();
-        Bullet bullet= AddBullet(GameManager.DEFENDER_BULLET,defender.position);
-		
-		if(!defender.isFacingRight){
-			bullet.SetInitialVelocity(new Vector2(-1,0));
-		}else{
-			bullet.SetInitialVelocity(new Vector2(1,0));
-		}
-    }
-
-    public void AddEnemyBullets(){
-		foreach(Enemy enemy in craftsNeedingBullets){
-			Bullet bullet= AddBullet(enemy.bulletType,enemy.position);
-			enemy.needsShooting=false;
-			if(enemy.position.x>defender.position.x){
-				bullet.SetInitialVelocity(new Vector2(-1,0));
-			}else{
-				bullet.SetInitialVelocity(new Vector2(1,0));
-			}
-		}
-	}
 
     internal void Tick(Vector2 pos)
     {
@@ -104,6 +69,51 @@ public class AnimationManager  {
 		offset.x+=textureScrollSpeed*Time.deltaTime;
 		scrollingMaterial.mainTextureOffset = offset;
     }
+
+	public Bullet AddBullet(string bulletName, Vector2 initialPosition){
+		Bullet bullet=bulletFactory.GetBullet(bulletName, initialPosition);
+		bulletsInScene.Add(bullet.displayObject,bullet);
+		return bullet;
+	}
+	public Bullet AddBullet(string bulletName, Vector2 initialPosition, Color color){
+		Bullet bullet=AddBullet(bulletName,initialPosition);
+		bullet.paint=color;
+		return bullet;
+	}
+	public Enemy AddEnemy(string enemyName, Vector2 initialPosition){
+		Enemy enemy=enemyFactory.GetEnemy(enemyName, initialPosition);
+		craftsInScene.Add(enemy.displayObject,enemy);
+		string intString=enemyName.Substring(6);
+		enemy.paint=GameManager.Instance.colorPallette[int.Parse(intString)-1];
+		return enemy;
+	}
+
+	public void FireDefender()
+    {
+        if(!defender.isReadyToFireAgain())return;
+		defender.SetFireTime();
+        Bullet bullet= AddBullet(GameManager.DEFENDER_BULLET,defender.position);
+		
+		if(!defender.isFacingRight){
+			bullet.SetInitialVelocity(new Vector2(-1,0));
+		}else{
+			bullet.SetInitialVelocity(new Vector2(1,0));
+		}
+    }
+
+    public void AddEnemyBullets(){
+		foreach(Enemy enemy in craftsNeedingBullets){
+			Bullet bullet= AddBullet(enemy.bulletType,enemy.position,enemy.paint);
+			enemy.needsShooting=false;
+			if(!enemy.bulletType.Equals(GameManager.BULLET4)&&!enemy.bulletType.Equals(GameManager.BULLET5)){
+				if(enemy.position.x>defender.position.x){
+					bullet.SetInitialVelocity(new Vector2(-1,0));
+				}else{
+					bullet.SetInitialVelocity(new Vector2(1,0));
+				}
+			}
+		}
+	}
 
     public void CheckAndRemoveEnemyAndBullet(GameObject enemyObject, GameObject bulletObject)
     {//bullet has hit enemy or enemy bullet
@@ -200,6 +210,7 @@ public class AnimationManager  {
 		sr.sprite=sprite; 
 		craft.transform.localScale=Vector2.one*10;
 		defender=new Defender(craft,Vector2.zero);
+		defender.paint=Color.white;
 		craft.name="defender";
     }
 

@@ -21,6 +21,7 @@ public class GameManager : Singleton<GameManager>{
 	public static Vector2 screenTopBottomLimits;
 	public static GameObject twinColliderPrefab;
 	public static GameObject singleColliderPrefab;
+	public Color[] colorPallette;
 
 	public void Initialise(GameObject singlePrefabObj, GameObject twinprefabObject){
 		Instance.currentLevel=1;

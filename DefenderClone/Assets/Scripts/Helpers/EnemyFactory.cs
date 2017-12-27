@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemyFactory {
-
+	
 	public Enemy GetEnemy(string whichEnemy, Vector2 initialPosition){
 		string textureName=whichEnemy.ToLower();
 		

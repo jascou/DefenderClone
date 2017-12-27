@@ -17,6 +17,7 @@ public class DefenderGame : MonoBehaviour {
 		GameManager.Instance.Initialise(singleColliderPrefab,twinColliderPrefab);
 		GameManager.Instance.InitLevel(-2560,(Screen.height/2)-120,2560,(Screen.height/-2)+50);
 		animationManager=new AnimationManager(scrollSpeedMax);
+		GameManager.Instance.colorPallette=colorPallette;
 		CreateSprites();
 		isMouseDown=false;
 		NotificationCenter.DefaultCenter.AddObserver (this, "BulletHitAlert");
@@ -67,8 +68,7 @@ public class DefenderGame : MonoBehaviour {
 		for (int i=0;i<numCrafts;i++){
 			pos.x=((2*Random.Range(0,2))-1)*Random.Range(0,width);
 			pos.y=((2*Random.Range(0,2))-1)*Random.Range(0,height);
-			Enemy enemy= animationManager.AddEnemy(GameManager.ENEMY1,pos);
-			enemy.paint=Color.red;
+			Enemy enemy= animationManager.AddEnemy(GameManager.ENEMY12,pos);
 		}
 
 		animationManager.AddDefender();
