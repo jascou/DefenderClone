@@ -278,6 +278,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   scrollingMaterial: {fileID: 2100000, guid: c237175ff2bfb4c7381614670fb5777a, type: 2}
   scrollSpeedMax: 800
+  twinColliderPrefab: {fileID: 1049361725558162, guid: ce7ae822886cf4bccaad9db15d79a48a,
+    type: 2}
+  singleColliderPrefab: {fileID: 1394687205753698, guid: c17e6e5bbc73c423299205153b418c84,
+    type: 2}
 --- !u!114 &1505041219
 MonoBehaviour:
   m_ObjectHideFlags: 0

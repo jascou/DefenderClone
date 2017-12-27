@@ -4,76 +4,73 @@ using UnityEngine;
 
 public class DefenderGame : MonoBehaviour {
 	public Material scrollingMaterial;
-	float scrollSpeed=0;
-	float textureScrollSpeed=0;
 	public float scrollSpeedMax;
-	TextureManager textureManager;
-	Vector2 offset=new Vector2();
-	GameObject defender;
+	public GameObject twinColliderPrefab;
+	public GameObject singleColliderPrefab;
 	
-	float halfScreenWidth;
-
-	GameObject[] craftsInScene;
-
+	bool isMouseDown;
+	AnimationManager animationManager;
 
 	void Start () {
-		GameManager.Instance.Initialise();
-		textureManager=GameManager.Instance.textureManager;
-		GameManager.Instance.InitLevel();
+		GameManager.Instance.Initialise(singleColliderPrefab,twinColliderPrefab);
+		GameManager.Instance.InitLevel(-2560,(Screen.height/2)-120,2560,(Screen.height/-2)+50);
+		animationManager=new AnimationManager(scrollSpeedMax);
 		CreateSprites();
-		halfScreenWidth=Screen.width/2;
+		isMouseDown=false;
+		NotificationCenter.DefaultCenter.AddObserver (this, "BulletHitAlert");
+		NotificationCenter.DefaultCenter.AddObserver (this, "HitAlert");
+		NotificationCenter.DefaultCenter.AddObserver (this, "ProximityAlert");
+		NotificationCenter.DefaultCenter.AddObserver (this, "NonProximityAlert");
 	}
 	void Update () {
 		Vector2 pos= Camera.main.ScreenToWorldPoint(Input.mousePosition);
-		scrollSpeed=scrollSpeedMax*(pos.x/halfScreenWidth);
-		foreach(GameObject craft in craftsInScene){
-			pos=craft.transform.localPosition;
-			pos.x-=scrollSpeed*Time.deltaTime;
-			if(pos.x>2560){
-				pos.x=-2560;
-			}else if(pos.x<-2560){
-				pos.x=2560;
-			}
-			craft.transform.localPosition=pos;
+		animationManager.Tick(pos);
+		
+		if(Input.GetMouseButtonDown(0)){
+			isMouseDown=true;
 		}
-		textureScrollSpeed=(scrollSpeed/5120);
-		offset.x+=textureScrollSpeed*Time.deltaTime;
-		scrollingMaterial.mainTextureOffset = offset;
+		if(Input.GetMouseButtonUp(0)){
+			isMouseDown=false;
+		}
+		
+		if(isMouseDown)animationManager.FireDefender();
 	}
-	
-	private void CreateSprites()
+	void ProximityAlert(NotificationCenter.Notification note){//enemy or enemy bullet enters hero zone
+		Hashtable data = note.data;
+		GameObject who=(GameObject)data["who"];
+		Debug.Log("Enter "+who.name);
+	}
+	void NonProximityAlert(NotificationCenter.Notification note){//enemy or enemy bullet exits hero zone
+		Hashtable data = note.data;
+		GameObject who=(GameObject)data["who"];
+		Debug.Log("Exit "+who.name);
+	}
+	void HitAlert(NotificationCenter.Notification note){//hero collides with enemy or enemy bullet
+		Hashtable data = note.data;
+		GameObject who=(GameObject)data["who"];
+		animationManager.CheckAndRemoveEnemy(who);//check for defenders life status
+	}
+	void BulletHitAlert(NotificationCenter.Notification note){//bullet hits enemy or enemy bullet
+		Hashtable data = note.data;
+		GameObject who=(GameObject)data["who"];
+		animationManager.CheckAndRemoveEnemyAndBullet(who,note.sender.gameObject);
+	}
+
+    private void CreateSprites()
     {
-        int numCrafts=100;
-		craftsInScene=new GameObject[numCrafts];
+        int numCrafts=1;
 		int height=Screen.height/2;
 		int width=2500;
-		SpriteRenderer sr;
 		Vector2 pos=new Vector2();
-		Sprite sprite;
-		GameObject craft;
 		for (int i=0;i<numCrafts;i++){
-			craft=new GameObject();
-			sr = craft.AddComponent<SpriteRenderer>();
-			sprite= Sprite.Create(textureManager.PackedTexture,textureManager.GetTextureRectByName("Crafts1"),new Vector2(0.5f,0.5f),1);
-			sr.sprite=sprite; 
 			pos.x=((2*Random.Range(0,2))-1)*Random.Range(0,width);
 			pos.y=((2*Random.Range(0,2))-1)*Random.Range(0,height);
-			craft.transform.localPosition=pos;
-			craft.transform.localScale=Vector2.one*10;
-			craftsInScene[i]=craft;
+			Enemy enemy= animationManager.AddEnemy(GameManager.ENEMY1,pos);
+			enemy.paint=Color.red;
 		}
 
-		defender=new GameObject();
-		sr = defender.AddComponent<SpriteRenderer>();
-		sprite= Sprite.Create(textureManager.PackedTexture,textureManager.GetTextureRectByName("Defender"),new Vector2(0.5f,0.5f),1);
-		sr.sprite=sprite; 
-		defender.transform.localScale=Vector2.one*10;
-		
-		GameObject gameObject=new GameObject();
-		SpriteRenderer terrainRenderer = gameObject.AddComponent<SpriteRenderer>();
-		terrainRenderer.material=scrollingMaterial;
-		sprite= Sprite.Create(textureManager.TerrainTex,textureManager.GetTextureRectByName("terrain"),new Vector2(0.5f,0.5f),1);
-		terrainRenderer.sprite=sprite; 
-		gameObject.transform.localScale=Vector2.one*20;
+		animationManager.AddDefender();
+
+		animationManager.AddBackground(scrollingMaterial);
     }
 }

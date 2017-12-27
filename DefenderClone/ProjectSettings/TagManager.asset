@@ -13,11 +13,11 @@ TagManager:
   - UI
   - 
   - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - enemybullet
+  - herobullet
+  - enemy
+  - hero
+  - proximity
   - 
   - 
   - 
@@ -40,4 +40,16 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: enemybullet
+    uniqueID: 3980357877
+    locked: 0
+  - name: herobullet
+    uniqueID: 837932041
+    locked: 0
+  - name: enemy
+    uniqueID: 2130864373
+    locked: 0
+  - name: hero
+    uniqueID: 3829151929
     locked: 0
