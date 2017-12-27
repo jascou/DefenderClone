@@ -5,30 +5,22 @@ using UnityEngine;
 public class BulletFactory {
 
 	public Bullet GetBullet(string whichBullet, Vector2 initialPosition){
-		bool isDefenderBullet=false;
-		if(whichBullet.Equals(GameManager.DEFENDER_BULLET)){
-			whichBullet=GameManager.BULLET1;
-			isDefenderBullet=true;
-		}
-		string textureName=whichBullet.ToLower();
-
 		GameObject bulletGO=GameObject.Instantiate(GameManager.singleColliderPrefab,initialPosition,Quaternion.identity);
-		SpriteRenderer sr = bulletGO.AddComponent<SpriteRenderer>();
-		Sprite sprite= Sprite.Create(GameManager.Instance.textureManager.PackedTexture,GameManager.Instance.textureManager.GetTextureRectByName(textureName),new Vector2(0.5f,0.5f),1);
-		sr.sprite=sprite; 
 		bulletGO.transform.localScale=Vector2.one*6;
 		bulletGO.name=whichBullet;
-		Bullet bullet=new Bullet(bulletGO,initialPosition);
-		bullet.bulletType=whichBullet;
-		BoxCollider2D boxCollider2D=bulletGO.GetComponent<BoxCollider2D>();
-		boxCollider2D.size= new Vector2(1,1);
-		if(!isDefenderBullet){
-			TriggerDispatcher dispatcher=bulletGO.GetComponent<TriggerDispatcher>();
-			Component.Destroy(dispatcher);
-			bulletGO.layer = LayerMask.NameToLayer("enemybullet");
-		}else{
-			
-		}
-		return bullet;
+		if(whichBullet.Equals(GameManager.DEFENDER_BULLET)){
+			return new HeroBullet(bulletGO,initialPosition);
+		}else if(whichBullet.Equals(GameManager.BULLET1)){
+			return new Bullet1(bulletGO,initialPosition);
+		}else if(whichBullet.Equals(GameManager.BULLET2)){
+			return new Bullet2(bulletGO,initialPosition);
+		}else if(whichBullet.Equals(GameManager.BULLET3)){
+			return new Bullet3(bulletGO,initialPosition);
+		}else if(whichBullet.Equals(GameManager.BULLET4)){
+			return new Bullet4(bulletGO,initialPosition);
+		}else if(whichBullet.Equals(GameManager.BULLET5)){
+			return new Bullet5(bulletGO,initialPosition);
+		}else{Debug.LogError("no such bullet "+whichBullet);}
+		return null;
 	}
 }

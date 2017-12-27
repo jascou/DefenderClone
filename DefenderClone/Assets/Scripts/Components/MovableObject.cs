@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class MovableObject {
 	public Vector2 position;
@@ -7,8 +6,9 @@ public class MovableObject {
 	public bool isTobeRemoved=false;
 	public GameObject displayObject;
 	protected SpriteRenderer spriteRenderer;
+	protected bool isCloseToDefender=false;
+    protected GameObject defenderRef;
 
-	
 	Vector2 topBottomLimits;
 	Vector2 leftRightLimits;
 
@@ -20,6 +20,10 @@ public class MovableObject {
 		displayObject=gameObject;
 		displayObject.transform.localPosition=position;
 		spriteRenderer=displayObject.GetComponent<SpriteRenderer>();
+		if(spriteRenderer==null){
+			spriteRenderer=displayObject.AddComponent<SpriteRenderer>();
+		}
+
 	}
 
 	public virtual void Move(float deltaX, float deltaY){
@@ -35,7 +39,7 @@ public class MovableObject {
 		displayObject.transform.localPosition=position;
 	}
 
-    private void FixPosition()
+    protected virtual void FixPosition()
     {
         position.y=Mathf.Clamp(position.y,topBottomLimits.y,topBottomLimits.x);
 		if(position.x<leftRightLimits.x){
@@ -44,6 +48,14 @@ public class MovableObject {
 		if(position.x>leftRightLimits.y){
 			position.x=leftRightLimits.x;
 		}
+    }
+
+	public virtual void Seek(GameObject defender){
+        defenderRef=defender;
+        isCloseToDefender=true;
+    }
+    public virtual void Roam(){
+		isCloseToDefender=false;
     }
 
     public Color paint

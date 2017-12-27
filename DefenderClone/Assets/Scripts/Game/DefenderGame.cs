@@ -7,6 +7,8 @@ public class DefenderGame : MonoBehaviour {
 	public float scrollSpeedMax;
 	public GameObject twinColliderPrefab;
 	public GameObject singleColliderPrefab;
+
+	public Color[] colorPallette;
 	
 	bool isMouseDown;
 	AnimationManager animationManager;
@@ -38,12 +40,12 @@ public class DefenderGame : MonoBehaviour {
 	void ProximityAlert(NotificationCenter.Notification note){//enemy or enemy bullet enters hero zone
 		Hashtable data = note.data;
 		GameObject who=(GameObject)data["who"];
-		Debug.Log("Enter "+who.name);
+		animationManager.InformProximity(who, true);//sent seek alert
 	}
 	void NonProximityAlert(NotificationCenter.Notification note){//enemy or enemy bullet exits hero zone
 		Hashtable data = note.data;
 		GameObject who=(GameObject)data["who"];
-		Debug.Log("Exit "+who.name);
+		animationManager.InformProximity(who, false);//sent roam alert
 	}
 	void HitAlert(NotificationCenter.Notification note){//hero collides with enemy or enemy bullet
 		Hashtable data = note.data;

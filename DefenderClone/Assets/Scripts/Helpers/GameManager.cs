@@ -18,6 +18,7 @@ public class GameManager : Singleton<GameManager>{
 	public static Vector2 topBottomLimits;
 	public static Vector2 leftRightLimits;
 	public static Vector2 screenLeftRightLimits;
+	public static Vector2 screenTopBottomLimits;
 	public static GameObject twinColliderPrefab;
 	public static GameObject singleColliderPrefab;
 
@@ -47,6 +48,8 @@ public class GameManager : Singleton<GameManager>{
 		leftRightLimits.y=right;
 		screenLeftRightLimits.x=-400;
 		screenLeftRightLimits.y=400;
+		screenTopBottomLimits.x=300;
+		screenTopBottomLimits.y=-300;
     }
 
     private int getDifficulty()
