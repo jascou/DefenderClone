@@ -163,7 +163,7 @@ public class Enemy4 : Enemy
       Sprite sprite= Sprite.Create(GameManager.Instance.textureManager.PackedTexture,GameManager.Instance.textureManager.GetTextureRectByName(textureName),new Vector2(0.5f,0.5f),1);
       spriteRenderer.sprite=sprite; 
 
-      speed=650;
+      speed=550;
       velocity=new Vector2(speed,0);
       if(Random.Range(0,2)==0)velocity.x*=-1;
     }
@@ -183,7 +183,7 @@ public class Enemy5 : Enemy
       Sprite sprite= Sprite.Create(GameManager.Instance.textureManager.PackedTexture,GameManager.Instance.textureManager.GetTextureRectByName(textureName),new Vector2(0.5f,0.5f),1);
       spriteRenderer.sprite=sprite; 
       
-      speed=750;
+      speed=650;
       velocity=new Vector2(speed,0);
       if(Random.Range(0,2)==0)velocity.x*=-1;
     }

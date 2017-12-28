@@ -54,7 +54,7 @@ public class HeroBullet : Bullet
 		Sprite sprite= Sprite.Create(GameManager.Instance.textureManager.PackedTexture,GameManager.Instance.textureManager.GetTextureRectByName(textureName),new Vector2(0.5f,0.5f),1);
 		spriteRenderer.sprite=sprite; 
         spriteRenderer.sortingLayerName="herobullet";
-        speed=1000;
+        speed=1200;
     }
     public override bool Tick(){
        if(position.x<GameManager.screenLeftRightLimits.x)isTobeRemoved=true;

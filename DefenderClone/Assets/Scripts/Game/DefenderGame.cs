@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class DefenderGame : MonoBehaviour {
@@ -12,11 +13,14 @@ public class DefenderGame : MonoBehaviour {
 	public GameObject menuPanel;
 	public GameObject UIPanel;
 	public Text scoreText;
-	public Text muxText;
+	public Text lifeText;
+	public Text levelText;
+	public AudioClip[] audios;
 	public AnimationCurve enemiesAtATimeCurve;
 	public Color[] colorPallette;
+	AnimationManager.GameState gameState;
+	int minEnemiesInLevel;
 	
-
 	string[] availableEnemies={GameManager.ENEMY1,GameManager.ENEMY2,GameManager.ENEMY3,
 		GameManager.ENEMY4,GameManager.ENEMY5,GameManager.ENEMY6,GameManager.ENEMY7,GameManager.ENEMY8,GameManager.ENEMY9,
 		GameManager.ENEMY10,GameManager.ENEMY11,GameManager.ENEMY12};
@@ -24,20 +28,21 @@ public class DefenderGame : MonoBehaviour {
 	bool isMouseDown;
 	AnimationManager animationManager;
 	bool hasGameStarted=false;
-	int score;
-	int mux;
 	List<string> enemiesToSpawn;
 	int enemiesAtATime;
-	void Awake(){
-		menuPanel.SetActive(true);
-		UIPanel.SetActive(false);
-		miniMapCam.enabled=false;
-	}
+	
 
 	void Start () {
-		GameManager.Instance.Initialise(singleColliderPrefab,twinColliderPrefab);
-		GameManager.Instance.InitLevel(-2560,(Screen.height/2)-120,2560,(Screen.height/-2)+50);
-		GameManager.colorPallette=colorPallette;
+		if(!GameManager.isLevelingUp){
+			GameManager.Instance.Initialise(singleColliderPrefab,twinColliderPrefab);
+			GameManager.Instance.InitLevel(-2560,(Screen.height/2)-120,2560,(Screen.height/-2)+50);
+			GameManager.colorPallette=colorPallette;
+			GameManager.audios=audios;
+			menuPanel.SetActive(true);
+			UIPanel.SetActive(false);
+			miniMapCam.enabled=false;
+			hasGameStarted=false;
+		}
 		GetLevelSettings();
 		animationManager=new AnimationManager(scrollSpeedMax,enemiesToSpawn,enemiesAtATime);
 		animationManager.PreparePixelExplosion();
@@ -46,27 +51,40 @@ public class DefenderGame : MonoBehaviour {
 		animationManager.AddBackground(scrollingMaterial);
 
 		isMouseDown=false;
-		hasGameStarted=false;
 		NotificationCenter.DefaultCenter.AddObserver (this, "BulletHitAlert");
 		NotificationCenter.DefaultCenter.AddObserver (this, "HitAlert");
 		NotificationCenter.DefaultCenter.AddObserver (this, "ProximityAlert");
 		NotificationCenter.DefaultCenter.AddObserver (this, "NonProximityAlert");
+		NotificationCenter.DefaultCenter.AddObserver (this, "LifeLoss");
+		NotificationCenter.DefaultCenter.AddObserver (this, "EnemyKilled");
+
+		if(GameManager.isLevelingUp){
+			updateUI();
+			LaunchEnemies(enemiesAtATime);
+			GameManager.isLevelingUp=false;
+			hasGameStarted=true;
+		}
 	}
     void Update () {
 		if(!hasGameStarted)return;
 		Vector2 pos= Camera.main.ScreenToWorldPoint(Input.mousePosition);
-		animationManager.Tick(pos);
 		
-		if(Input.GetMouseButtonDown(0)){
-			isMouseDown=true;
+		gameState=animationManager.Tick(pos);
+		if(gameState.Equals(AnimationManager.GameState.LevelUp)){
+			LevelUp();
+		}else{
+			if(Input.GetMouseButtonDown(0)){
+				isMouseDown=true;
+			}
+			if(Input.GetMouseButtonUp(0)){
+				isMouseDown=false;
+			}
+			
+			if(isMouseDown)animationManager.FireDefender();
 		}
-		if(Input.GetMouseButtonUp(0)){
-			isMouseDown=false;
-		}
-		
-		if(isMouseDown)animationManager.FireDefender();
 	}
-	void ProximityAlert(NotificationCenter.Notification note){//enemy or enemy bullet enters hero zone
+
+    void ProximityAlert(NotificationCenter.Notification note){//enemy or enemy bullet enters hero zone
 		if(!hasGameStarted)return;
 		Hashtable data = note.data;
 		GameObject who=(GameObject)data["who"];
@@ -90,6 +108,18 @@ public class DefenderGame : MonoBehaviour {
 		GameObject who=(GameObject)data["who"];
 		animationManager.CheckAndRemoveEnemyAndBullet(who,note.sender.gameObject);
 	}
+	void LifeLoss(NotificationCenter.Notification note){//life has lost
+		if(GameManager.cheatEnabled)return;
+		GameManager.Instance.life--;
+		updateUI();
+		if(GameManager.Instance.life<=0)GameOver();
+	}
+	void EnemyKilled(NotificationCenter.Notification note){//killed an enemy
+		Hashtable data = note.data;
+		int howMuch=(int)data["value"];
+		GameManager.Instance.totalScore+=howMuch;
+		updateUI();
+	}
 
     private void LaunchEnemies(int numCrafts)
     {
@@ -102,10 +132,11 @@ public class DefenderGame : MonoBehaviour {
     {
         int currentLevel=GameManager.Instance.currentLevel;//=14;
 		int worstEnemyInLevel=(int)Mathf.Clamp((currentLevel/1.25f)+3,0,12);
-		int minEnemiesInLevel=(currentLevel+1)*2;
+		minEnemiesInLevel=(currentLevel+1)*2;
 		int levelDifficulty=(currentLevel+1)*2+(currentLevel+1)*3;
 		float curveTime=currentLevel/10.0f;
 		enemiesAtATime=(int)(10*enemiesAtATimeCurve.Evaluate(curveTime));
+		GameManager.Instance.life+=6;
 		
 		Debug.Log("Level "+currentLevel.ToString()+" difficulty "+levelDifficulty.ToString()+" enemiesmax "+minEnemiesInLevel+" worst one "+worstEnemyInLevel.ToString()+" at a time "+enemiesAtATime.ToString());
 		
@@ -126,8 +157,7 @@ public class DefenderGame : MonoBehaviour {
 
     private List<int> PlaceMaximumEnemies(int levelDifficulty, int minEnemiesInLevel, int worstEnemyInLevel)
     {
-        int originalDifficulty=levelDifficulty;
-		int originalworstEnemyInLevel=worstEnemyInLevel;
+        int originalworstEnemyInLevel=worstEnemyInLevel;
 		List<int> spawn=new List<int>();
 		for(int i=0;i<minEnemiesInLevel;i++){
 			spawn.Add(1);
@@ -161,17 +191,40 @@ public class DefenderGame : MonoBehaviour {
     }
 
     void updateUI(){
-		muxText.text=mux.ToString()+" x";
-		scoreText.text=score.ToString()+" x";
+		lifeText.text="Life "+GameManager.Instance.life.ToString();
+		scoreText.text="Score "+GameManager.Instance.totalScore.ToString();
+		levelText.text="Level "+GameManager.Instance.currentLevel.ToString();
 	}
-	public void StartGame(){
+
+    private void GameOver()
+    {
+        hasGameStarted=false;
+		GameManager.isLevelingUp=false;
+		StartCoroutine(Reload());
+    }
+
+    private void LevelUp()
+    {
+        hasGameStarted=false;
+		GameManager.isLevelingUp=true;
+		GameManager.Instance.currentLevel++;
+		StartCoroutine(Reload());
+    }
+
+    private IEnumerator Reload()
+    {
+        yield return new WaitForSeconds(0.5f);
+		//Application.LoadLevel(0);
+		SceneManager.LoadScene("Blocky Defender");
+    }
+
+    public void StartGame(){
 		GameManager.cheatEnabled=false;
 		miniMapCam.enabled=true;
-		hasGameStarted=true;
 		menuPanel.SetActive(false);
 		UIPanel.SetActive(true);
-		score=0;
-		mux=1;
+		hasGameStarted=true;
+
 		updateUI();
 		LaunchEnemies(enemiesAtATime);
 	}

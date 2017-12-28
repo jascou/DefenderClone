@@ -14,7 +14,8 @@ public class GameManager : Singleton<GameManager>{
 	public int currentLevel;
 
 	public int totalScore;
-
+	public int life;
+	
 	public TextureManager textureManager;
 	public static Vector2 topBottomLimits;
 	public static Vector2 leftRightLimits;
@@ -24,7 +25,9 @@ public class GameManager : Singleton<GameManager>{
 	public static GameObject twinColliderPrefab;
 	public static GameObject singleColliderPrefab;
 	public static Color[] colorPallette;
+	public static AudioClip[] audios;
 	public static bool cheatEnabled=false;
+	public static bool isLevelingUp=false;
 
 	public void Initialise(GameObject singlePrefabObj, GameObject twinprefabObject){
 		Instance.currentLevel=1;
@@ -41,6 +44,7 @@ public class GameManager : Singleton<GameManager>{
 		Instance.textureManager.PackTextures();
 		singleColliderPrefab=singlePrefabObj;
 		twinColliderPrefab=twinprefabObject;
+		Debug.Log("initialise");
 	}
 
     internal void InitLevel(float left, float top, float right, float bottom)

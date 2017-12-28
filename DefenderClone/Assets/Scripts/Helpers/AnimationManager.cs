@@ -3,6 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class AnimationManager  {
+	public enum GameState
+    {
+        Active,
+        LevelUp
+    };
 
 	Dictionary<GameObject,Enemy> craftsInScene;
 	Dictionary<GameObject,Bullet> bulletsInScene;
@@ -28,6 +33,8 @@ public class AnimationManager  {
 	GameObject pixelGO;
 	List<string> enemiesToSpawn;
 	int enemiesAtATime;
+	GameState currentState;
+	Hashtable data=new Hashtable(1);
 
 	public AnimationManager(float maxScrollSpeed, List<string> newEnemiesList, int enemyPresence){
 		enemiesAtATime=enemyPresence;
@@ -45,9 +52,10 @@ public class AnimationManager  {
 		textureManager=GameManager.Instance.textureManager;
 		halfScreenWidth=Screen.width/2;
 		mainCamera=Camera.main;
+		currentState=GameState.Active;
 	}
 
-    internal void Tick(Vector2 pos)
+    public GameState Tick(Vector2 pos)
     {
         camPos=mainCamera.transform.localPosition;
 		scrollSpeed=scrollSpeedMax*((pos.x-camPos.x)/halfScreenWidth);
@@ -97,17 +105,27 @@ public class AnimationManager  {
 			}
 		}
 		CleanUp();
+		if(craftsInScene.Count<enemiesAtATime){
+			if(enemiesToSpawn.Count>0){
+				AddEnemy();
+			}else if(craftsInScene.Count==0){
+				currentState=GameState.LevelUp;
+			}
+		}
 		textureScrollSpeed=(scrollSpeed/5120);
 		offset.x+=textureScrollSpeed*Time.deltaTime;
 		scrollingMaterial.mainTextureOffset = offset;
+		return currentState;
     }
 
 	public Bullet AddBullet(string bulletName, Vector2 initialPosition){
+		AudioManager.Main.PlayNewSound(GameManager.audios[0]);
 		Bullet bullet=bulletFactory.GetBullet(bulletName, initialPosition);
 		bulletsInScene.Add(bullet.displayObject,bullet);
 		return bullet;
 	}
 	public Bullet AddBullet(string bulletName, Vector2 initialPosition, Color color){
+		AudioManager.Main.PlayNewSound(GameManager.audios[1]);
 		Bullet bullet=AddBullet(bulletName,initialPosition);
 		bullet.paint=color;
 		return bullet;
@@ -126,8 +144,9 @@ public class AnimationManager  {
 		craftsInScene.Add(enemy.displayObject,enemy);
 		string intString=enemiesToSpawn[enemyIndex].Substring(6);
 		enemy.paint=GameManager.colorPallette[int.Parse(intString)-1];
+		//Debug.Log("Launch "+enemiesToSpawn[enemyIndex]);
+		
 		enemiesToSpawn.RemoveAt(enemyIndex);
-
 		return enemy;
 	}
 
@@ -163,14 +182,17 @@ public class AnimationManager  {
         Enemy enemy;
 		Bullet bullet;
 		bool foundItem=false;
+		int value=0;
 		if(bulletsInScene.TryGetValue(bulletObject, out bullet)){
 			if(!bullet.isTobeRemoved){
 				if(craftsInScene.TryGetValue(enemyObject, out enemy)){
 					if(!enemy.isTobeRemoved){
 						bullet.isTobeRemoved=true;
 						enemy.isTobeRemoved=true;
-						Debug.Log("Bullet hit "+enemyObject.name);
+						//Debug.Log("Bullet hit "+enemyObject.name);
 						AddExplosion(enemyObject.transform.localPosition,enemy.paint);
+						string intString=enemy.displayObject.name.Substring(6);
+						value=int.Parse(intString);
 					}
 					foundItem=true;
 				}
@@ -180,13 +202,19 @@ public class AnimationManager  {
 						if(!enemyBullet.isTobeRemoved){
 							bullet.isTobeRemoved=true;
 							enemyBullet.isTobeRemoved=true;
-							Debug.Log("Bullet hit "+enemyObject.name);
+							//Debug.Log("Bullet hit "+enemyObject.name);
+							value=1;
 						}
 					}
 				}
 			}
 		}
-		
+		if(foundItem){
+			data=new Hashtable(1);
+			data.Add("value",2*value);
+			NotificationCenter.Notification note = new NotificationCenter.Notification (Camera.main, "EnemyKilled", data);
+			NotificationCenter.DefaultCenter.PostNotification(note);
+		}	
     }
 
     public void CheckAndRemoveEnemy(GameObject enemyObject)
@@ -195,9 +223,10 @@ public class AnimationManager  {
 		bool foundItem=false;
 		if(craftsInScene.TryGetValue(enemyObject, out enemy)){
 			if(!enemy.isTobeRemoved){
-				Debug.Log("Defender hit "+enemyObject.name);
+				//Debug.Log("Defender hit "+enemyObject.name);
 				enemy.isTobeRemoved=true;
 				AddExplosion(defender.displayObject.transform.localPosition,defender.paint);
+				NotificationCenter.DefaultCenter.PostNotification(Camera.main, "LifeLoss");
 			}
 			foundItem=true;
 		}
@@ -205,9 +234,10 @@ public class AnimationManager  {
 		Bullet bullet;
 		if(bulletsInScene.TryGetValue(enemyObject, out bullet)){
 			if(!bullet.isTobeRemoved){
-				Debug.Log("Defender hit "+enemyObject.name);
+				//Debug.Log("Defender hit "+enemyObject.name);
 				bullet.isTobeRemoved=true;	
 				AddExplosion(defender.displayObject.transform.localPosition,defender.paint);
+				NotificationCenter.DefaultCenter.PostNotification(Camera.main, "LifeLoss");
 			}
 		}
     }
@@ -289,7 +319,8 @@ public class AnimationManager  {
     }
 	private PixelExplosion AddExplosion(Vector2 initialPosition, Color color)
     {
-        PixelExplosion explosion=new PixelExplosion(pixelGO,initialPosition,color);
+        AudioManager.Main.PlayNewSound(GameManager.audios[2]);
+		PixelExplosion explosion=new PixelExplosion(pixelGO,initialPosition,color);
 		explosionsInScene.Add(explosion);
 		return explosion;
     }
