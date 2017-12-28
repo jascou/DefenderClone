@@ -5,7 +5,6 @@ using UnityEngine;
 public class EnemyFactory {
 	
 	public Enemy GetEnemy(string whichEnemy, Vector2 initialPosition){
-		string textureName=whichEnemy.ToLower();
 		
 		GameObject enemyGO=GameObject.Instantiate(GameManager.singleColliderPrefab,initialPosition,Quaternion.identity);
 		enemyGO.transform.localScale=Vector2.one*6;

@@ -5,11 +5,16 @@ using UnityEngine;
 public class Defender : MovableObject
 {
     float lastFiredTime;
-	float firingDelay=0.05f;
+	float firingDelay=0.1f;
     public Defender(GameObject gameObject, Vector2 initialPosition) : base(gameObject, initialPosition)
     {
 		isFacingRight=true;
     }
+	public void MoveTo(Vector2 newPos){
+		position=Vector2.Lerp(position,newPos,0.05f);
+		FixPosition();
+		displayObject.transform.localPosition=position;
+	}
 	public bool isReadyToFireAgain(){
 		if(Time.timeSinceLevelLoad-lastFiredTime>firingDelay){
 			return true;

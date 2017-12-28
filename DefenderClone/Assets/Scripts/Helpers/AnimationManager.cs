@@ -5,8 +5,6 @@ using UnityEngine;
 
 public class AnimationManager  {
 
-	//List<Enemy> craftsInScene;
-	//List<Bullet> bulletsInScene;
 	Dictionary<GameObject,Enemy> craftsInScene;
 	Dictionary<GameObject,Bullet> bulletsInScene;
 	Defender defender;
@@ -22,6 +20,13 @@ public class AnimationManager  {
 	List<Bullet> bulletsToRemove;
 	List<Enemy> craftsToRemove;
 	List<Enemy> craftsNeedingBullets;
+	List<PixelExplosion> explosionsToRemove;
+	List<PixelExplosion> explosionsInScene;
+
+	Camera mainCamera;
+	Vector3 camPos;
+	float scrollVelocity;
+	GameObject pixelGO;
 
 	public AnimationManager(float maxScrollSpeed){
 		scrollSpeedMax=maxScrollSpeed;
@@ -30,20 +35,36 @@ public class AnimationManager  {
 		bulletsToRemove=new List<Bullet>();
 		craftsToRemove=new List<Enemy>();
 		craftsNeedingBullets=new List<Enemy>();
+		explosionsInScene=new List<PixelExplosion>();
+		explosionsToRemove=new List<PixelExplosion>();
 		bulletFactory=new BulletFactory();
 		enemyFactory=new EnemyFactory();
 		textureManager=GameManager.Instance.textureManager;
 		halfScreenWidth=Screen.width/2;
+		mainCamera=Camera.main;
 	}
 
     internal void Tick(Vector2 pos)
     {
-        defender.MoveTo(0,pos.y);
-		if(pos.x<0){
+        camPos=mainCamera.transform.localPosition;
+		scrollSpeed=scrollSpeedMax*((pos.x-camPos.x)/halfScreenWidth);
+		
+		if(scrollSpeed>0 && camPos.x<GameManager.cameraLeftRightLimits.y){
+			camPos.x+=scrollSpeed*Time.deltaTime;
+			scrollSpeed=0;
+		}
+		if(scrollSpeed<0 && camPos.x>GameManager.cameraLeftRightLimits.x){
+			camPos.x+=scrollSpeed*Time.deltaTime;
+			scrollSpeed=0;
+		}
+		camPos.x=Mathf.Clamp(camPos.x,GameManager.cameraLeftRightLimits.x,GameManager.cameraLeftRightLimits.y);
+		mainCamera.transform.localPosition=camPos;
+
+		defender.MoveTo(new Vector2(0,pos.y));
+		if(pos.x<defender.position.x){
 			defender.isFacingRight=false;
 		}else defender.isFacingRight=true;
 
-		scrollSpeed=scrollSpeedMax*(pos.x/halfScreenWidth);
 		craftsToRemove.Clear();
 		craftsNeedingBullets.Clear();
 		foreach(Enemy enemy in craftsInScene.Values){
@@ -62,6 +83,14 @@ public class AnimationManager  {
 				bullet.Move((-scrollSpeed*Time.deltaTime),0);
 			}else{
 				bulletsToRemove.Add(bullet);
+			}
+		}
+		explosionsToRemove.Clear();
+		foreach(PixelExplosion explosion in explosionsInScene){
+			if(explosion.Tick()){
+				explosion.Move((-scrollSpeed*Time.deltaTime),0);
+			}else{
+				explosionsToRemove.Add(explosion);
 			}
 		}
 		CleanUp();
@@ -84,7 +113,7 @@ public class AnimationManager  {
 		Enemy enemy=enemyFactory.GetEnemy(enemyName, initialPosition);
 		craftsInScene.Add(enemy.displayObject,enemy);
 		string intString=enemyName.Substring(6);
-		enemy.paint=GameManager.Instance.colorPallette[int.Parse(intString)-1];
+		enemy.paint=GameManager.colorPallette[int.Parse(intString)-1];
 		return enemy;
 	}
 
@@ -127,6 +156,7 @@ public class AnimationManager  {
 						bullet.isTobeRemoved=true;
 						enemy.isTobeRemoved=true;
 						Debug.Log("Bullet hit "+enemyObject.name);
+						AddExplosion(enemyObject.transform.localPosition,enemy.paint);
 					}
 					foundItem=true;
 				}
@@ -153,6 +183,7 @@ public class AnimationManager  {
 			if(!enemy.isTobeRemoved){
 				Debug.Log("Defender hit "+enemyObject.name);
 				enemy.isTobeRemoved=true;
+				AddExplosion(defender.displayObject.transform.localPosition,defender.paint);
 			}
 			foundItem=true;
 		}
@@ -162,6 +193,7 @@ public class AnimationManager  {
 			if(!bullet.isTobeRemoved){
 				Debug.Log("Defender hit "+enemyObject.name);
 				bullet.isTobeRemoved=true;	
+				AddExplosion(defender.displayObject.transform.localPosition,defender.paint);
 			}
 		}
     }
@@ -175,6 +207,10 @@ public class AnimationManager  {
 		foreach(Enemy enemy in craftsToRemove){
 			craftsInScene.Remove(enemy.displayObject);
 			enemy.Remove();
+		}
+		foreach(PixelExplosion explosion in explosionsToRemove){
+			explosionsInScene.Remove(explosion);
+			explosion.Remove();
 		}
     }
 	public void InformProximity(GameObject gameObject, bool doSeek)
@@ -208,6 +244,7 @@ public class AnimationManager  {
 		SpriteRenderer sr = craft.AddComponent<SpriteRenderer>();
 		Sprite sprite= Sprite.Create(textureManager.PackedTexture,textureManager.GetTextureRectByName("Defender"),new Vector2(0.5f,0.5f),1);
 		sr.sprite=sprite; 
+		sr.sortingLayerName="hero";
 		craft.transform.localScale=Vector2.one*10;
 		defender=new Defender(craft,Vector2.zero);
 		defender.paint=Color.white;
@@ -224,5 +261,35 @@ public class AnimationManager  {
 		terrainRenderer.sprite=sprite; 
 		gameObject.name="background";
 		gameObject.transform.localScale=Vector2.one*20;
+
+		gameObject=new GameObject();
+		SpriteRenderer sr = gameObject.AddComponent<SpriteRenderer>();
+		sprite= Sprite.Create(textureManager.PackedTexture,textureManager.GetTextureRectByName("bullets5"),new Vector2(0.5f,0.5f),1);
+		sr.sprite=sprite;
+		Color color;
+		ColorUtility.TryParseHtmlString("#2A2D33", out color);
+		sr.color=color; 
+		gameObject.name="ground";
+		gameObject.transform.localScale=new Vector2(5500,200);
+		gameObject.transform.localPosition=new Vector2(0,-236);
+    }
+	private PixelExplosion AddExplosion(Vector2 initialPosition, Color color)
+    {
+        PixelExplosion explosion=new PixelExplosion(pixelGO,initialPosition,color);
+		explosionsInScene.Add(explosion);
+		return explosion;
+    }
+	public void PreparePixelExplosion()
+    {
+        pixelGO=new GameObject();
+		SpriteRenderer sr = pixelGO.AddComponent<SpriteRenderer>();
+		Sprite sprite= Sprite.Create(textureManager.PackedTexture,textureManager.GetTextureRectByName("bullets5"),new Vector2(0.5f,0.5f),1);
+		sr.sprite=sprite;
+		sr.sortingLayerName="hero";
+		pixelGO.name="pixel";
+		pixelGO.transform.localScale=new Vector2(10,10);
+		SimplePool.Preload(pixelGO,20);
+		//Component.Destroy(pixelGO);
+		pixelGO.SetActive(false);
     }
 }

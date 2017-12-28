@@ -24,6 +24,7 @@ public class Enemy : MovableObject{
 		Component.Destroy(dispatcher);
 		gameObject.layer = LayerMask.NameToLayer("enemy");
     enemyType=gameObject.name;
+    spriteRenderer.sortingLayerName="enemy";
   }
   public override void Move(float deltaX, float deltaY){
     if(isCloseToDefender){

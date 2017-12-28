@@ -16,6 +16,7 @@ public class Bullet : MovableObject
         bulletType=gameObject.name;
         boxCollider2D=gameObject.GetComponent<BoxCollider2D>();
 		boxCollider2D.size= new Vector2(2,2);
+        spriteRenderer.sortingLayerName="enemybullet";
     }
 	public override void Move(float deltaX, float deltaY){
 		base.Move(deltaX+(velocity.x*Time.deltaTime),deltaY+(velocity.y*Time.deltaTime));
@@ -52,6 +53,7 @@ public class HeroBullet : Bullet
 		string textureName=GameManager.BULLET1.ToLower();
 		Sprite sprite= Sprite.Create(GameManager.Instance.textureManager.PackedTexture,GameManager.Instance.textureManager.GetTextureRectByName(textureName),new Vector2(0.5f,0.5f),1);
 		spriteRenderer.sprite=sprite; 
+        spriteRenderer.sortingLayerName="herobullet";
         speed=1000;
     }
     public override bool Tick(){

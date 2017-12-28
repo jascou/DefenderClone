@@ -13,18 +13,22 @@ public class GameManager : Singleton<GameManager>{
 
 	int currentLevel;
 	int currentDifficulty;
+	int totalScore;
 
 	public TextureManager textureManager;
 	public static Vector2 topBottomLimits;
 	public static Vector2 leftRightLimits;
 	public static Vector2 screenLeftRightLimits;
 	public static Vector2 screenTopBottomLimits;
+	public static Vector2 cameraLeftRightLimits;
 	public static GameObject twinColliderPrefab;
 	public static GameObject singleColliderPrefab;
-	public Color[] colorPallette;
+	public static Color[] colorPallette;
+	public static bool cheatEnabled=false;
 
 	public void Initialise(GameObject singlePrefabObj, GameObject twinprefabObject){
 		Instance.currentLevel=1;
+		Instance.totalScore=0;
 		Instance.textureManager= new TextureManager(18);
 		Instance.textureManager.LoadTextArtToTexture("Defender/Defender");
 		for(int i=0;i<12;i++){
@@ -51,6 +55,8 @@ public class GameManager : Singleton<GameManager>{
 		screenLeftRightLimits.y=400;
 		screenTopBottomLimits.x=300;
 		screenTopBottomLimits.y=-300;
+		cameraLeftRightLimits.x=-100;
+		cameraLeftRightLimits.y=100;
     }
 
     private int getDifficulty()
