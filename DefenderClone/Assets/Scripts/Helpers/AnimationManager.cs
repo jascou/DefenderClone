@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -27,8 +26,12 @@ public class AnimationManager  {
 	Vector3 camPos;
 	float scrollVelocity;
 	GameObject pixelGO;
+	List<string> enemiesToSpawn;
+	int enemiesAtATime;
 
-	public AnimationManager(float maxScrollSpeed){
+	public AnimationManager(float maxScrollSpeed, List<string> newEnemiesList, int enemyPresence){
+		enemiesAtATime=enemyPresence;
+		enemiesToSpawn=newEnemiesList;
 		scrollSpeedMax=maxScrollSpeed;
 		craftsInScene=new Dictionary<GameObject, Enemy>();
 		bulletsInScene=new Dictionary<GameObject, Bullet>();
@@ -109,11 +112,22 @@ public class AnimationManager  {
 		bullet.paint=color;
 		return bullet;
 	}
-	public Enemy AddEnemy(string enemyName, Vector2 initialPosition){
-		Enemy enemy=enemyFactory.GetEnemy(enemyName, initialPosition);
+	public Enemy AddEnemy(){
+		if(enemiesToSpawn.Count==0)return null;
+		float height=GameManager.topBottomLimits.y;
+		int width=2100;
+		Vector2 pos=new Vector2();
+		int enemyIndex;
+		pos.x=((2*Random.Range(0,2))-1)*(450+Random.Range(0,width));
+		pos.y=((2*Random.Range(0,2))-1)*Random.Range(0,height);
+		enemyIndex=Random.Range(0,enemiesToSpawn.Count);
+		
+		Enemy enemy=enemyFactory.GetEnemy(enemiesToSpawn[enemyIndex], pos);
 		craftsInScene.Add(enemy.displayObject,enemy);
-		string intString=enemyName.Substring(6);
+		string intString=enemiesToSpawn[enemyIndex].Substring(6);
 		enemy.paint=GameManager.colorPallette[int.Parse(intString)-1];
+		enemiesToSpawn.RemoveAt(enemyIndex);
+
 		return enemy;
 	}
 

@@ -981,6 +981,24 @@ MonoBehaviour:
   UIPanel: {fileID: 1855364610}
   scoreText: {fileID: 1852925624}
   muxText: {fileID: 27438720}
+  enemiesAtATimeCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 2
+      time: 0
+      value: 0.3
+      inSlope: 0.5
+      outSlope: 0.5
+      tangentMode: 34
+    - serializedVersion: 2
+      time: 1
+      value: 0.8
+      inSlope: 0.5
+      outSlope: 0.5
+      tangentMode: 34
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
   colorPallette:
   - {r: 0.41911763, g: 0.4711966, b: 1, a: 1}
   - {r: 0.31790656, g: 0.77205884, b: 0.7156813, a: 1}

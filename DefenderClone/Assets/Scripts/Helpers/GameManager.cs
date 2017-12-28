@@ -11,9 +11,9 @@ public class GameManager : Singleton<GameManager>{
     public const string ENEMY4 = "crafts4", ENEMY5 = "crafts5", ENEMY6 = "crafts6", ENEMY7 = "crafts7", ENEMY8 = "crafts8";
     public const string ENEMY9 = "crafts9", ENEMY10 = "crafts10", ENEMY11 = "crafts11", ENEMY12 = "crafts12";
 
-	int currentLevel;
-	int currentDifficulty;
-	int totalScore;
+	public int currentLevel;
+
+	public int totalScore;
 
 	public TextureManager textureManager;
 	public static Vector2 topBottomLimits;
@@ -46,7 +46,6 @@ public class GameManager : Singleton<GameManager>{
     internal void InitLevel(float left, float top, float right, float bottom)
     {
         Instance.textureManager.LoadTerrainTexture(256);
-		Instance.currentDifficulty=Instance.getDifficulty();
 		topBottomLimits.x=top;
 		topBottomLimits.y=bottom;
 		leftRightLimits.x=left;
@@ -57,10 +56,5 @@ public class GameManager : Singleton<GameManager>{
 		screenTopBottomLimits.y=-300;
 		cameraLeftRightLimits.x=-100;
 		cameraLeftRightLimits.y=100;
-    }
-
-    private int getDifficulty()
-    {
-        return 1;
     }
 }
