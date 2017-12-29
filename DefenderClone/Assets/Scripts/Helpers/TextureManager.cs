@@ -26,7 +26,9 @@ public class TextureManager {
             return terrainTex;
         }
     }
-
+	/*
+	Manages textures which are all dynamically created at runtime, packed and referenced via dictionary
+	 */
     public TextureManager(int howManyTextures){
 		validColors=new int[2];
 		allGraphics=new Texture2D[howManyTextures];
@@ -39,20 +41,18 @@ public class TextureManager {
 		int textureIndex;
 		Rect textureRect=new Rect(0,0,0,0);
 		if(textureDict.TryGetValue(textureName, out textureIndex)){
-			//Debug.Log(textureIndex);
 			if(textureIndex==-1){
 				textureRect=new Rect(0,0,terrainTex.width,terrainTex.height);
 			}else{
 				textureRect=ConvertUVToTextureCoordinates(packedAssets[textureIndex]);
 			}
 		}else{
-			//Debug.Log("none");
+			Debug.Log("no such texture "+textureName);
 		}
 		return textureRect;
 	}
 	public void LoadTextArtToTexture(string textPath){
 		string[] textureName=textPath.Split("/"[0]);
-		//Debug.Log(textureName[textureName.Length-1]+":"+textureIndex);
 		textureDict.Add(textureName[textureName.Length-1].ToLower(),textureIndex);
 		allGraphics[textureIndex++]=CreateArtTexture(textPath);
 	}
@@ -62,7 +62,7 @@ public class TextureManager {
 		textureDict.Add("terrain",-1);
 		CreateTerrainTexture(terrainWidth);
 	}
-
+	//packs all textures into single texture to help reduce draw calls
     public void PackTextures()
     {
 		packedTexture = new Texture2D(8, 8, TextureFormat.ARGB4444, false);
@@ -77,7 +77,7 @@ public class TextureManager {
 		}
 		allGraphics=null;
     }
-
+	//brute creation of the background texture connecting random points and filling everything below it
 	void CreateTerrainTexture(int terrainWidth)
     {
         //Random.InitState(23);
@@ -131,7 +131,7 @@ public class TextureManager {
 		terrainTex.Apply();
     }
 
-
+	//load art text from resources and create individual enemies and bullets
 	Texture2D CreateArtTexture(string textName)
     {
 		int invalidTile=-1;
@@ -176,6 +176,7 @@ public class TextureManager {
 		texture.Apply();
 		return texture;
     }
+	//needed to rotate array clockwise due to origin difference for texture2d
 	int[,] rotateCW(int[,] arr,int rows,int cols) {
 		int M = rows;
 		int N = cols;
@@ -187,12 +188,13 @@ public class TextureManager {
 		}
 		return ret;
 	}
+	//needed to convert UV (0,1) coordinates to texture pixel coordinates
 	private Rect ConvertUVToTextureCoordinates(Rect rect)
     {
         return new Rect(rect.x*packedTexture.width,
 			rect.y*packedTexture.height,
 			rect.width*packedTexture.width,
 			rect.height*packedTexture.height
-			);
+		);
     }
 }

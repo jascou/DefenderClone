@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+/*
+a fake particle effect for explosion using few bullet sprites. uses pooling for its game objects
+ */
 public class PixelExplosion
 {
 	int numPixelsMax=6;
@@ -14,12 +16,12 @@ public class PixelExplosion
     {
 		int numPixels=numPixelsMin+Random.Range(0,numPixelsMax-numPixelsMin);
 		pixels=new List<PixelParticle>();
-		for(int i=0;i<numPixels;i++){
+		for(int i=0;i<numPixels;i++){//get game objects for the fx from pool
 			pixels.Add(new PixelParticle(SimplePool.Spawn(pixelGO,initialPosition,Quaternion.identity),initialPosition));
 			pixels[i].paint=color;
 		}
     }
-	public bool Tick(){
+	public bool Tick(){//update particle time, life expiry
         elapsedTime+=Time.deltaTime;
         if(elapsedTime>=life)isTobeRemoved=true;
 		if(isTobeRemoved)return false;
@@ -37,6 +39,10 @@ public class PixelExplosion
 		pixels.Clear();
 	}
 }
+
+/*
+individual particles in the pixel explosion fx
+ */
 class PixelParticle : MovableObject
 {
 	float damping=0.96f;

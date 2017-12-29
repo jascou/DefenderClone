@@ -6,6 +6,10 @@ public class Defender : MovableObject
 {
     float lastFiredTime;
 	float firingDelay=0.1f;
+
+	/*
+	defender specific behaviour
+	 */
     public Defender(GameObject gameObject, Vector2 initialPosition) : base(gameObject, initialPosition)
     {
 		isFacingRight=true;
@@ -15,6 +19,8 @@ public class Defender : MovableObject
 		FixPosition();
 		displayObject.transform.localPosition=position;
 	}
+
+	//wait for firing delay
 	public bool isReadyToFireAgain(){
 		if(Time.timeSinceLevelLoad-lastFiredTime>firingDelay){
 			return true;
@@ -24,7 +30,7 @@ public class Defender : MovableObject
 	public void SetFireTime(){
 		lastFiredTime=Time.timeSinceLevelLoad;
 	}
-
+	//get/set direction
     public bool isFacingRight
     {
         get

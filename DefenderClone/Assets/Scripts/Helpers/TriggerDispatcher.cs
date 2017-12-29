@@ -9,7 +9,9 @@ public class TriggerDispatcher : MonoBehaviour {
 	public string triggerExitEvent;
 	public string triggerStayEvent;
 	public string dataParam;
-	
+	/*
+	A listener for dispatching various trigger events to global audience
+	 */
 	void OnTriggerEnter2D(Collider2D other){
 		if(!trackTriggerEnter)return;
 		if (dataParam.Length > 0) {

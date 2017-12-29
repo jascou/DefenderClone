@@ -2,7 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+/*
+The crappiest class which connects everything and handles all temporary data communication between classes.
+Holds all global variables, data, methods etc and is hence a singleton
+*/
 public class GameManager : Singleton<GameManager>{
 	protected GameManager() { } // guarantee this will be always a singleton only - can't use the constructor!
 
@@ -28,7 +31,8 @@ public class GameManager : Singleton<GameManager>{
 	public static AudioClip[] audios;
 	public static bool cheatEnabled=false;
 	public static bool isLevelingUp=false;
-
+	
+	//Called once in games life time where we prepare all textures
 	public void Initialise(GameObject singlePrefabObj, GameObject twinprefabObject){
 		Instance.currentLevel=1;
 		Instance.totalScore=0;
@@ -46,7 +50,7 @@ public class GameManager : Singleton<GameManager>{
 		twinColliderPrefab=twinprefabObject;
 		Debug.Log("initialise");
 	}
-
+	//called once per level, idea was to change values per level if needed.
     internal void InitLevel(float left, float top, float right, float bottom)
     {
         Instance.textureManager.LoadTerrainTexture(256);

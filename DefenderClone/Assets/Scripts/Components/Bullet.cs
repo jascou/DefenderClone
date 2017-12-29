@@ -1,7 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+/*
+File holds bullet base class and all 5 bullet classes. 
+there is code duplication but idea is that we can have very different entities easily
+ */
 public class Bullet : MovableObject
 {
     protected string bulletType;
@@ -10,7 +13,9 @@ public class Bullet : MovableObject
     protected BoxCollider2D boxCollider2D;
 
     protected float speed;
-    
+    /*
+    Main bullet class has all common code
+     */
     public Bullet(GameObject gameObject, Vector2 initialPosition) : base(gameObject, initialPosition){
         gameObject.layer = LayerMask.NameToLayer("enemybullet");
         bulletType=gameObject.name;
@@ -21,6 +26,9 @@ public class Bullet : MovableObject
 	public override void Move(float deltaX, float deltaY){
 		base.Move(deltaX+(velocity.x*Time.deltaTime),deltaY+(velocity.y*Time.deltaTime));
 	}
+    /*
+    if bullet goes out of vertical screen bounds, it needs removal
+     */
     protected override void FixPosition()
     {
         if(position.y>GameManager.screenTopBottomLimits.x||position.y<GameManager.screenTopBottomLimits.y){
@@ -33,18 +41,21 @@ public class Bullet : MovableObject
 			position.x=GameManager.leftRightLimits.x;
 		}
     }
+    //there is a life span for bullet after which it gets removed
     public virtual bool Tick(){
         elapsedTime+=Time.deltaTime;
         if(elapsedTime>=life)isTobeRemoved=true;
         if(isTobeRemoved)return false;
         return true;
     }
+    //set velocity
     public void SetInitialVelocity(Vector2 direction){
         velocity=direction*speed;
     }
 }
+/* *** different bullet types *** */
 public class HeroBullet : Bullet
-{
+{//moves straight
     public HeroBullet(GameObject gameObject, Vector2 initialPosition) : base(gameObject, initialPosition)
     {
         life=1.5f;
@@ -64,9 +75,9 @@ public class HeroBullet : Bullet
 } 
 
 public class Bullet1 : Bullet
-{
+{//moves straight
     public Bullet1(GameObject gameObject, Vector2 initialPosition) : base(gameObject, initialPosition)
-    {//straight motion
+    {
         life=1.2f;
         boxCollider2D.size= new Vector2(1,1);
         TriggerDispatcher dispatcher=gameObject.GetComponent<TriggerDispatcher>();
@@ -74,12 +85,13 @@ public class Bullet1 : Bullet
         string textureName=GameManager.BULLET1.ToLower();
 		Sprite sprite= Sprite.Create(GameManager.Instance.textureManager.PackedTexture,GameManager.Instance.textureManager.GetTextureRectByName(textureName),new Vector2(0.5f,0.5f),1);
 		spriteRenderer.sprite=sprite; 
-        speed=600;
+        speed=500;
     }
 } 
 
 public class Bullet2 : Bullet
-{//straight motion graphic variant
+{//straight motion graphic variant, used with directing towards defender non horizontally
+    bool targetIsSet=false;
     public Bullet2(GameObject gameObject, Vector2 initialPosition) : base(gameObject, initialPosition)
     {
         life=1.2f;
@@ -88,7 +100,15 @@ public class Bullet2 : Bullet
         string textureName=GameManager.BULLET2.ToLower();
 		Sprite sprite= Sprite.Create(GameManager.Instance.textureManager.PackedTexture,GameManager.Instance.textureManager.GetTextureRectByName(textureName),new Vector2(0.5f,0.5f),1);
 		spriteRenderer.sprite=sprite; 
-        speed=600;
+        speed=400;
+    }
+    //goes towards defender known position
+    public override void Seek(GameObject defender){
+        if(targetIsSet)return;
+        targetIsSet=true;
+        Vector2 targetPos=defender.transform.position;
+        velocity=(targetPos-position).normalized*speed;
+        base.Seek(defender);
     }
 } 
 
@@ -105,7 +125,7 @@ public class Bullet3 : Bullet
         string textureName=GameManager.BULLET3.ToLower();
 		Sprite sprite= Sprite.Create(GameManager.Instance.textureManager.PackedTexture,GameManager.Instance.textureManager.GetTextureRectByName(textureName),new Vector2(0.5f,0.5f),1);
 		spriteRenderer.sprite=sprite; 
-        speed=750;
+        speed=650;
     }
     public override void Move(float deltaX, float deltaY){
         if(isHorizontal){
@@ -118,7 +138,7 @@ public class Bullet3 : Bullet
 } 
 
 public class Bullet4 : Bullet
-{//random disperse in circle stays longer. should not assign velocity to this bullet externally
+{//random disperse in circle stays longer. DO NOT ASSIGN VELOCITY to this bullet externally
     float damping=0.96f;
     public Bullet4(GameObject gameObject, Vector2 initialPosition) : base(gameObject, initialPosition)
     {
@@ -138,7 +158,7 @@ public class Bullet4 : Bullet
 } 
 
 public class Bullet5 : Bullet
-{//homes on defender, need to receive proximity alerts from animation manager, do not assign velocity
+{//homes on defender, need to receive proximity alerts from animation manager, DO NOT ASSIGN VELOCITY externally
     float damping=0.96f;
 
     public Bullet5(GameObject gameObject, Vector2 initialPosition) : base(gameObject, initialPosition)

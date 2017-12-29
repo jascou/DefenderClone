@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+/*
+This is the scene script which is attached to any gameobject on screen to drive the game
+ */
 
 public class DefenderGame : MonoBehaviour {
 	public Material scrollingMaterial;
@@ -33,7 +36,7 @@ public class DefenderGame : MonoBehaviour {
 	
 
 	void Start () {
-		if(!GameManager.isLevelingUp){
+		if(!GameManager.isLevelingUp){//Game Launch, run one time in life time of the game.
 			GameManager.Instance.Initialise(singleColliderPrefab,twinColliderPrefab);
 			GameManager.Instance.InitLevel(-2560,(Screen.height/2)-120,2560,(Screen.height/-2)+50);
 			GameManager.colorPallette=colorPallette;
@@ -43,14 +46,19 @@ public class DefenderGame : MonoBehaviour {
 			miniMapCam.enabled=false;
 			hasGameStarted=false;
 		}
+		//load level specific data
 		GetLevelSettings();
+		//animation manager handles all graphics and animation
 		animationManager=new AnimationManager(scrollSpeedMax,enemiesToSpawn,enemiesAtATime);
+		//pool the explosion effect
 		animationManager.PreparePixelExplosion();
-		
+		//add defender and bg
 		animationManager.AddDefender();
 		animationManager.AddBackground(scrollingMaterial);
 
 		isMouseDown=false;
+
+		//listen to async events
 		NotificationCenter.DefaultCenter.AddObserver (this, "BulletHitAlert");
 		NotificationCenter.DefaultCenter.AddObserver (this, "HitAlert");
 		NotificationCenter.DefaultCenter.AddObserver (this, "ProximityAlert");
@@ -60,16 +68,20 @@ public class DefenderGame : MonoBehaviour {
 
 		if(GameManager.isLevelingUp){
 			updateUI();
+			//launch the initial number of enemies
 			LaunchEnemies(enemiesAtATime);
 			GameManager.isLevelingUp=false;
 			hasGameStarted=true;
 		}
 	}
-    void Update () {
+    void Update () {//game loop
 		if(!hasGameStarted)return;
 		Vector2 pos= Camera.main.ScreenToWorldPoint(Input.mousePosition);
 		
+		//this is where all action happens
 		gameState=animationManager.Tick(pos);
+		//..
+
 		if(gameState.Equals(AnimationManager.GameState.LevelUp)){
 			LevelUp();
 		}else{
@@ -79,68 +91,76 @@ public class DefenderGame : MonoBehaviour {
 			if(Input.GetMouseButtonUp(0)){
 				isMouseDown=false;
 			}
-			
+			//fire on mousedown
 			if(isMouseDown)animationManager.FireDefender();
 		}
 	}
 
-    void ProximityAlert(NotificationCenter.Notification note){//enemy or enemy bullet enters hero zone
+    void ProximityAlert(NotificationCenter.Notification note){//event fired when enemy or enemy bullet enters hero zone
 		if(!hasGameStarted)return;
 		Hashtable data = note.data;
 		GameObject who=(GameObject)data["who"];
 		animationManager.InformProximity(who, true);//sent seek alert
 	}
-	void NonProximityAlert(NotificationCenter.Notification note){//enemy or enemy bullet exits hero zone
+	void NonProximityAlert(NotificationCenter.Notification note){//event fired when enemy or enemy bullet exits hero zone
 		if(!hasGameStarted)return;
 		Hashtable data = note.data;
 		GameObject who=(GameObject)data["who"];
 		animationManager.InformProximity(who, false);//sent roam alert
 	}
-	void HitAlert(NotificationCenter.Notification note){//hero collides with enemy or enemy bullet
+	void HitAlert(NotificationCenter.Notification note){//event fired when hero collides with enemy or enemy bullet
 		if(!hasGameStarted)return;
 		Hashtable data = note.data;
 		GameObject who=(GameObject)data["who"];
-		animationManager.CheckAndRemoveEnemy(who);//check for defenders life status
+		animationManager.CheckAndRemoveEnemy(who);//check for defenders life status?
 	}
-	void BulletHitAlert(NotificationCenter.Notification note){//bullet hits enemy or enemy bullet
+	void BulletHitAlert(NotificationCenter.Notification note){//event fired when bullet hits enemy or enemy bullet
 		if(!hasGameStarted)return;
 		Hashtable data = note.data;
 		GameObject who=(GameObject)data["who"];
 		animationManager.CheckAndRemoveEnemyAndBullet(who,note.sender.gameObject);
 	}
-	void LifeLoss(NotificationCenter.Notification note){//life has lost
+	void LifeLoss(NotificationCenter.Notification note){//event fired when life is lost
 		if(GameManager.cheatEnabled)return;
 		GameManager.Instance.life--;
 		updateUI();
 		if(GameManager.Instance.life<=0)GameOver();
 	}
-	void EnemyKilled(NotificationCenter.Notification note){//killed an enemy
+	void EnemyKilled(NotificationCenter.Notification note){//event fired when enemy is killed
 		Hashtable data = note.data;
-		int howMuch=(int)data["value"];
+		int howMuch=(int)data["value"];//enemy specific score value
 		GameManager.Instance.totalScore+=howMuch;
 		updateUI();
 	}
 
+	//initial launch of enemies
     private void LaunchEnemies(int numCrafts)
     {
 		for (int i=0;i<numCrafts;i++){
 			animationManager.AddEnemy();
 		}
     }
-
+	//level specific settings
     private void GetLevelSettings()
     {
-        int currentLevel=GameManager.Instance.currentLevel;//=14;
+        //get current level or cheat here to load specific level
+		int currentLevel=GameManager.Instance.currentLevel;//=14;
+		//level will have enemies upto this enemy not higher enemies
 		int worstEnemyInLevel=(int)Mathf.Clamp((currentLevel/1.25f)+3,0,12);
+		//minimum/maximum number of enemies in the level
 		minEnemiesInLevel=(currentLevel+1)*2;
+		//a level difficulty value which needs to be satisfied with the sum of difficulties of all enemies in level
 		int levelDifficulty=(currentLevel+1)*2+(currentLevel+1)*3;
 		float curveTime=currentLevel/10.0f;
+		//enemies that can be in scene at a specific time is loaded from a curve
 		enemiesAtATime=(int)(10*enemiesAtATimeCurve.Evaluate(curveTime));
+		//add 6 life per level to preexisting life as game is HARD :P
 		GameManager.Instance.life+=6;
 		
 		Debug.Log("Level "+currentLevel.ToString()+" difficulty "+levelDifficulty.ToString()+" enemiesmax "+minEnemiesInLevel+" worst one "+worstEnemyInLevel.ToString()+" at a time "+enemiesAtATime.ToString());
-		
+		//load list of enemies based on above values
 		List<int> enemyIdsToSpawn=PlaceMaximumEnemies(levelDifficulty,minEnemiesInLevel,worstEnemyInLevel);
+		//randomise low difficulty enemies
 		if(GameManager.Instance.currentLevel>4){
 			for(int i=0;i<enemyIdsToSpawn.Count;i++){
 				if(enemyIdsToSpawn[i]==1){//get rid of that too many 1 values
@@ -154,7 +174,7 @@ public class DefenderGame : MonoBehaviour {
 			enemiesToSpawn.Add(availableEnemies[(enemyIdsToSpawn[i]-1)]);
 		}
     }
-
+	//logic to load enemies based on 3 limits. fill with lowest enemy and then replace to hit the level difficulty
     private List<int> PlaceMaximumEnemies(int levelDifficulty, int minEnemiesInLevel, int worstEnemyInLevel)
     {
         int originalworstEnemyInLevel=worstEnemyInLevel;

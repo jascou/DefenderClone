@@ -12,7 +12,9 @@ public class MovableObject {
 	Vector2 topBottomLimits;
 	Vector2 leftRightLimits;
 
-
+	/*
+	Base class for all moving objects in scene. it has all the necessary behaviour for general motion and ticking
+	 */
 	public MovableObject(GameObject gameObject, Vector2 initialPosition){
 		topBottomLimits=GameManager.topBottomLimits;
 		leftRightLimits=GameManager.leftRightLimits;
@@ -26,19 +28,21 @@ public class MovableObject {
 
 	}
 
+	//moves the object based on values passed
 	public virtual void Move(float deltaX, float deltaY){
 		position.x+=deltaX;
 		position.y+=deltaY;
 		FixPosition();
 		displayObject.transform.localPosition=position;
 	}
+	//moves to specific position, not used frequently or ever, just in case
 	public virtual void MoveTo(float newX, float newY){
 		position.x=newX;
 		position.y=newY;
 		FixPosition();
 		displayObject.transform.localPosition=position;
 	}
-
+	//seemlessly scroll when they go out of level world bounds.
     protected virtual void FixPosition()
     {
         position.y=Mathf.Clamp(position.y,topBottomLimits.y,topBottomLimits.x);
@@ -49,15 +53,16 @@ public class MovableObject {
 			position.x=leftRightLimits.x;
 		}
     }
-
+	//behaviour called when this object reaches hero proximity
 	public virtual void Seek(GameObject defender){
         defenderRef=defender;
         isCloseToDefender=true;
     }
+	//behaviour called when this object moved away from hero proximity
     public virtual void Roam(){
 		isCloseToDefender=false;
     }
-
+	//color the object
     public Color paint
     {
         get
@@ -69,8 +74,7 @@ public class MovableObject {
             spriteRenderer.color=value;
         }
     }
-
-
+	//cleanup
     public void Remove()
     {
         Component.Destroy(displayObject);

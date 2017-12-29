@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+/*
+Factory pattern for enemy
+ */
 public class EnemyFactory {
 	
 	public Enemy GetEnemy(string whichEnemy, Vector2 initialPosition){

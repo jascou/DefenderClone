@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/*
+Factory pattern for bullets
+ */
 public class BulletFactory {
 
 	public Bullet GetBullet(string whichBullet, Vector2 initialPosition){

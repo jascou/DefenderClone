@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
-
+/*
+File holds Enemy base class and all 12 enemy variants
+ */
 public class Enemy : MovableObject{
   protected string enemyType;
   public string bulletType;
@@ -16,6 +18,7 @@ public class Enemy : MovableObject{
   protected float timeToRetarget;
   protected float timeToRetargetDefault=0.8f;
   protected float velocityLerpVal=0.2f;
+  //seek and roam becomes more important for enemy classes
   public Enemy(GameObject gameObject, Vector2 initialPosition) : base(gameObject, initialPosition)
   {	
     boxCollider2D=gameObject.GetComponent<BoxCollider2D>();
@@ -26,17 +29,19 @@ public class Enemy : MovableObject{
     enemyType=gameObject.name;
     spriteRenderer.sortingLayerName="enemy";
   }
+  //move pushes enemy to a destination, when reached sets time for retargetting as the hero will move away
   public override void Move(float deltaX, float deltaY){
     if(isCloseToDefender){
       Vector2 desiredVelocity=(destination-position).normalized*speed;
       velocity=Vector2.Lerp(velocity,desiredVelocity,velocityLerpVal);
-      if(Vector2.Distance(destination,position)<20 &&!destinationReached){//Debug.Log("reached");
+      if(Vector2.Distance(destination,position)<20 &&!destinationReached){
         timeToRetarget=timeToRetargetDefault;
         destinationReached=true;
       }
     }
     base.Move(deltaX+(velocity.x*Time.deltaTime),deltaY+(velocity.y*Time.deltaTime));
 	}
+  //if within hero space, randomly fires, also handles retargetting after some time
   public virtual bool Tick(){
     if(!isTobeRemoved && isCloseToDefender){
       if(Random.Range(0,(agressionMax-agression))<1 || destinationReached){
@@ -65,6 +70,7 @@ public class Enemy : MovableObject{
       SetFireTime();
     }
   }
+  //firing delay
   public bool isReadyToFireAgain(){
 		if(Time.timeSinceLevelLoad-lastFiredTime>firingDelay){
 			return true;
@@ -102,7 +108,7 @@ public class Enemy1 : Enemy
     }
 }
 public class Enemy2 : Enemy
-{
+{//1 variant bullet 2
     public Enemy2(GameObject gameObject, Vector2 initialPosition) : base(gameObject, initialPosition)
     {
       string textureName=GameManager.ENEMY2.ToLower();
@@ -115,8 +121,9 @@ public class Enemy2 : Enemy
       agression=2;
       timeToRetargetDefault=0.6f;
       velocityLerpVal=0.3f;
-      firingDelay=0.2f;
+      firingDelay=0.4f;
     }
+    //different destination than 1
     public override void Seek(GameObject defender){
       destination.y=defender.transform.localPosition.y;
       destination.x=position.x;
@@ -129,7 +136,7 @@ public class Enemy2 : Enemy
     }
 }
 public class Enemy3 : Enemy
-{
+{//uses bullet 3
     public Enemy3(GameObject gameObject, Vector2 initialPosition) : base(gameObject, initialPosition)
     {
       string textureName=GameManager.ENEMY3.ToLower();
@@ -156,14 +163,14 @@ public class Enemy3 : Enemy
     }
 }
 public class Enemy4 : Enemy
-{//won't shoot, will flee
+{//won't shoot, will flee, annoyance enemy
     public Enemy4(GameObject gameObject, Vector2 initialPosition) : base(gameObject, initialPosition)
     {
       string textureName=GameManager.ENEMY4.ToLower();
       Sprite sprite= Sprite.Create(GameManager.Instance.textureManager.PackedTexture,GameManager.Instance.textureManager.GetTextureRectByName(textureName),new Vector2(0.5f,0.5f),1);
       spriteRenderer.sprite=sprite; 
 
-      speed=550;
+      speed=450;
       velocity=new Vector2(speed,0);
       if(Random.Range(0,2)==0)velocity.x*=-1;
     }
@@ -183,7 +190,7 @@ public class Enemy5 : Enemy
       Sprite sprite= Sprite.Create(GameManager.Instance.textureManager.PackedTexture,GameManager.Instance.textureManager.GetTextureRectByName(textureName),new Vector2(0.5f,0.5f),1);
       spriteRenderer.sprite=sprite; 
       
-      speed=650;
+      speed=550;
       velocity=new Vector2(speed,0);
       if(Random.Range(0,2)==0)velocity.x*=-1;
     }
@@ -209,6 +216,7 @@ public class Enemy6 : Enemy
       velocityLerpVal=0.3f;
       firingDelay=0.1f;
     }
+    //moves across, hence harder to dodge
     public override void Seek(GameObject defender){
       destination.y=(position.y*-1)+(Random.Range(5,20)*Mathf.Sign(destination.y)*-1);
       destination.x=position.x*-1;
@@ -220,7 +228,7 @@ public class Enemy6 : Enemy
     }
 }
 public class Enemy7 : Enemy
-{//same as 6, flare bullet
+{//same as 6, but flare bullet
     public Enemy7(GameObject gameObject, Vector2 initialPosition) : base(gameObject, initialPosition)
     {
       string textureName=GameManager.ENEMY7.ToLower();
@@ -257,6 +265,7 @@ public class Enemy8 : Enemy
       velocityLerpVal=0.5f;
       firingDelay=0.8f;
     }
+    //homes on defender
     public override void Seek(GameObject defender){
       destination=defender.transform.localPosition;
       base.Seek(defender);
@@ -302,7 +311,7 @@ public class Enemy10 : Enemy
       agression=6;
       timeToRetargetDefault=0.1f;
       velocityLerpVal=0.5f;
-      firingDelay=0.1f;
+      firingDelay=0.2f;
     }
     public override void Seek(GameObject defender){
       destination=defender.transform.localPosition;
@@ -314,7 +323,7 @@ public class Enemy10 : Enemy
     }
 }
 public class Enemy11 : Enemy
-{//like enemy 6 but with homing bullet 5 high aggression
+{//like enemy 6 but with homing bullet 5 high aggression, most interesting enemy
     public Enemy11(GameObject gameObject, Vector2 initialPosition) : base(gameObject, initialPosition)
     {
       string textureName=GameManager.ENEMY6.ToLower();
@@ -370,7 +379,7 @@ public class Enemy12 : Enemy
     if(isTobeRemoved)return false;
     return true;
   }
-
+//all suiciders get red paint when they target defender and home in.
     public override void Seek(GameObject defender){
       savedColor=paint;
       paint=Color.red;
